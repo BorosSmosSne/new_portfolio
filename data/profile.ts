@@ -27,7 +27,25 @@ export const profile: Profile = {
   // Drop your real PDF at /public/resume.pdf to replace the placeholder.
   resumeUrl: "/resume.pdf",
 
+  /**
+   * PORTRAIT PHOTO
+   * `public/profile.png` is currently a generic placeholder silhouette.
+   *
+   * To use your own photo:
+   *   1. Save it in /public (a portrait crop around 4:5 works best — the frame
+   *      in the Hero uses that ratio).
+   *   2. Point `src` at it, e.g. "/profile.jpg".
+   *   3. Set `width`/`height` to the file's real pixel size.
+   */
+  photo: {
+    src: "/profile.png",
+    alt: "Heng Chhay standing against a plain wall, arms crossed",
+    width: 800,
+    height: 1000,
+  },
+
   // TODO: swap these placeholder URLs for your real profiles.
+  // Order here is the order they appear in the Hero, Contact and Footer.
   socials: [
     {
       platform: "github",
@@ -38,6 +56,21 @@ export const profile: Profile = {
       platform: "linkedin",
       label: "LinkedIn",
       href: "https://www.linkedin.com/in/your-profile",
+    },
+    {
+      platform: "facebook",
+      label: "Facebook",
+      href: "https://www.facebook.com/your-profile",
+    },
+    {
+      platform: "instagram",
+      label: "Instagram",
+      href: "https://www.instagram.com/your-username",
+    },
+    {
+      platform: "figma",
+      label: "Figma",
+      href: "https://www.figma.com/@your-username",
     },
   ],
 };

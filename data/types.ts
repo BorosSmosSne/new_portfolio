@@ -25,11 +25,28 @@ export type Profile = {
   about: string[];
   /** Path (relative to /public) of the resume PDF offered for download. */
   resumeUrl: string;
+  /** Portrait photo shown in the Hero. */
+  photo: Photo;
   socials: SocialLink[];
 };
 
+/**
+ * A portrait image served from /public.
+ * `width`/`height` are the file's real pixel dimensions — next/image needs them
+ * to reserve space before the image loads (which avoids layout shift). They set
+ * the aspect ratio only; the rendered size is controlled by Tailwind classes.
+ */
+export type Photo = {
+  src: string;
+  /** Describe the photo for screen readers and for when the image fails to load. */
+  alt: string;
+  width: number;
+  height: number;
+};
+
 /** Recognised social platforms. Add a case here + an icon in components/Icons.tsx. */
-export type SocialPlatform = "github" | "linkedin" | "email";
+export type SocialPlatform =
+  "github" | "linkedin" | "facebook" | "instagram" | "figma" | "email";
 
 export type SocialLink = {
   platform: SocialPlatform;

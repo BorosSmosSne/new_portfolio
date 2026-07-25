@@ -1,0 +1,40 @@
+/**
+ * The ONLY stylesheet in the project.
+ * It exists purely to load Tailwind's layers plus a handful of base defaults
+ * that can't be expressed as utility classes. All component styling is done
+ * with Tailwind classes in the JSX.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Smooth scrolling for the nav's anchor links. Respects reduced-motion below. */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-slate-700 antialiased dark:bg-slate-950 dark:text-slate-300;
+  }
+
+  /* Keyboard focus ring in the accent colour, applied consistently everywhere. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+  }
+
+  /* Accessibility: disable motion for users who ask for it at the OS level. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

@@ -29,16 +29,19 @@ export const profile: Profile = {
 
   /**
    * PORTRAIT PHOTO
-   * `public/profile.png` is currently a generic placeholder silhouette.
+   * Images live in `public/images/`. Paths here are written as if `public/` were
+   * the site root, so `public/images/profile.png` is referenced as
+   * "/images/profile.png".
    *
+   * `images/profile.png` is currently a generic placeholder silhouette.
    * To use your own photo:
-   *   1. Save it in /public (a portrait crop around 4:5 works best — the frame
-   *      in the Hero uses that ratio).
-   *   2. Point `src` at it, e.g. "/profile.jpg".
+   *   1. Drop the file into `public/images/` (a portrait crop around 4:5 works
+   *      best — the frame in the Hero uses that ratio).
+   *   2. Point `src` at it, e.g. "/images/profile.jpg".
    *   3. Set `width`/`height` to the file's real pixel size.
    */
   photo: {
-    src: "/profile.png",
+    src: "/images/profile.png",
     alt: "Heng Chhay standing against a plain wall, arms crossed",
     width: 800,
     height: 1000,

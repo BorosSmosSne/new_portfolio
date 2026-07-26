@@ -30,21 +30,22 @@ export const profile: Profile = {
   /**
    * PORTRAIT PHOTO
    * Images live in `public/images/`. Paths here are written as if `public/` were
-   * the site root, so `public/images/profile.png` is referenced as
-   * "/images/profile.png".
+   * the site root, so `public/images/profiles.jpg` is referenced as
+   * "/images/profiles.jpg".
    *
-   * `images/profile.png` is currently a generic placeholder silhouette.
-   * To use your own photo:
-   *   1. Drop the file into `public/images/` (a portrait crop around 4:5 works
-   *      best — the frame in the Hero uses that ratio).
-   *   2. Point `src` at it, e.g. "/images/profile.jpg".
-   *   3. Set `width`/`height` to the file's real pixel size.
+   * To swap the photo:
+   *   1. Drop the file into `public/images/` (a 4:5 portrait crop fits the Hero
+   *      frame exactly — this one is 4032x5040, which is 4:5).
+   *   2. Point `src` at it.
+   *   3. Set `width`/`height` to the file's real pixel size. next/image uses
+   *      them to reserve the right space before the image loads; wrong values
+   *      cause the page to jump as it appears.
    */
   photo: {
     src: "/images/profiles.jpg",
     alt: "Heng Chhay standing against a plain wall, arms crossed",
-    width: 800,
-    height: 1000,
+    width: 4032,
+    height: 5040,
   },
 
   // TODO: swap these placeholder URLs for your real profiles.

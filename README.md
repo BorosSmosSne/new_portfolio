@@ -57,7 +57,7 @@ public/
 
 ## Before you deploy
 
-1. **Photo** — `public/images/profile.png` is a generic placeholder silhouette. Drop your own portrait into `public/images/` (a 4:5 crop fits the Hero frame exactly), then update `photo.src`, `photo.width` and `photo.height` in `data/profile.ts`. Paths are relative to `public/`, so `public/images/profile.jpg` is written as `/images/profile.jpg`.
+1. **Photo** — the portrait lives at `public/images/profiles.jpg` and is configured via `photo` in `data/profile.ts`. To swap it, drop a new file into `public/images/` (a 4:5 crop fits the Hero frame exactly) and update `src`, `width` and `height`. Paths are relative to `public/`, so `public/images/me.jpg` is written as `/images/me.jpg`. Keep the file to roughly 1600px on its long edge — anything larger is wasted bytes in the repo, since `next/image` downscales for delivery anyway.
 2. **Resume** — replace `public/resume.pdf` with your real PDF (keep the filename, or update `resumeUrl` in `data/profile.ts`). The current file is a placeholder.
 3. **Social links** — swap the placeholder URLs in `data/profile.ts`. GitHub, LinkedIn, Facebook, Instagram and Figma are wired up; to add another platform, add it to `SocialPlatform` in `data/types.ts`, write an icon in `components/Icons.tsx`, and register it in the `socialIcons` map (TypeScript will tell you if you miss a step).
 4. **Contact form email** — add a `RESEND_API_KEY` so messages actually reach your inbox. See the section below.

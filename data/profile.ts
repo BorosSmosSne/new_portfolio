@@ -41,7 +41,7 @@ export const profile: Profile = {
    *   3. Set `width`/`height` to the file's real pixel size.
    */
   photo: {
-    src: "/images/profile.png",
+    src: "/images/profiles.jpg",
     alt: "Heng Chhay standing against a plain wall, arms crossed",
     width: 800,
     height: 1000,

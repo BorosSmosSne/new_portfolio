@@ -46,11 +46,52 @@ const DEFAULT_FROM = "Portfolio Contact <onboarding@resend.dev>";
 /** At most 3 messages per IP per minute. See lib/rate-limit.ts for caveats. */
 const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 3 });
 
+/**
+ * Reads an environment variable, treating blank values as absent.
+ *
+ * `.env.example` ships keys with empty values, so a copied-but-unfilled
+ * `.env.local` yields "" rather than undefined. Stray whitespace from pasting a
+ * key is also trimmed.
+ */
+function readEnv(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
 /** Best-effort client IP. Proxies put the original address in x-forwarded-for. */
 function getClientKey(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return request.headers.get("x-real-ip") ?? "unknown";
+}
+
+/**
+ * GET /api/contact — configuration check, development only.
+ *
+ * Visit http://localhost:3000/api/contact to see whether delivery is wired up
+ * without having to submit the form. It never returns the key itself, and it
+ * 404s outside development so a deployed site exposes nothing.
+ */
+export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const apiKey = readEnv("RESEND_API_KEY");
+
+  return NextResponse.json({
+    configured: Boolean(apiKey),
+    // Confirms the key was picked up, without printing it.
+    apiKey: apiKey
+      ? `set (${apiKey.length} chars, starts with "${apiKey.slice(0, 3)}")`
+      : "missing — add RESEND_API_KEY to .env.local and restart the dev server",
+    deliversTo:
+      readEnv("CONTACT_TO_EMAIL") ?? `${profile.email} (from profile)`,
+    sendsFrom: readEnv("CONTACT_FROM_EMAIL") ?? `${DEFAULT_FROM} (default)`,
+    note: readEnv("CONTACT_FROM_EMAIL")
+      ? undefined
+      : "The default sender can only deliver to the address you registered with Resend. Verify a domain and set CONTACT_FROM_EMAIL to email anyone else.",
+  });
 }
 
 export async function POST(request: Request) {
@@ -95,29 +136,37 @@ export async function POST(request: Request) {
   }
 
   // ---- 5. Deliver --------------------------------------------------------
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.CONTACT_TO_EMAIL || profile.email;
-  const from = process.env.CONTACT_FROM_EMAIL || DEFAULT_FROM;
+  // Env values are trimmed, and an empty string counts as "not set" — that's
+  // what you get from a blank line like `RESEND_API_KEY=` in .env.local.
+  const apiKey = readEnv("RESEND_API_KEY");
+  const to = readEnv("CONTACT_TO_EMAIL") ?? profile.email;
+  const from = readEnv("CONTACT_FROM_EMAIL") ?? DEFAULT_FROM;
 
   if (!apiKey) {
     // Not configured. In development this is expected, so log the message and
-    // let the form show success. In production, fail loudly instead of
-    // silently dropping someone's message.
+    // let the form show success. In production, say so plainly instead of
+    // pretending the message was sent — the form then offers the visitor a
+    // prefilled mailto link so their message isn't lost.
     if (process.env.NODE_ENV === "production") {
       console.error(
-        "[contact] RESEND_API_KEY is not set — refusing to accept messages. See app/api/contact/route.ts for setup.",
+        "[contact] RESEND_API_KEY is not set, so messages cannot be emailed.\n" +
+          "         Set it in your hosting provider's environment variables\n" +
+          "         (Vercel: Settings -> Environment Variables) and redeploy.\n" +
+          "         See the Contact form section of README.md.",
       );
       return NextResponse.json(
         {
           error: "not_configured",
-          message: "The contact form is not configured yet.",
+          message: "The contact form is not connected to email yet.",
         },
         { status: 503 },
       );
     }
 
     console.warn(
-      "[contact] RESEND_API_KEY is not set. Message logged instead of emailed:",
+      "\n[contact] RESEND_API_KEY is not set, so nothing was emailed.\n" +
+        "          Add it to .env.local and restart to send for real.\n" +
+        "          The submission was:",
     );
     console.info({ to, ...values });
     return NextResponse.json({ ok: true, delivered: false });

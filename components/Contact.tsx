@@ -45,6 +45,9 @@ export function Contact() {
   const [errors, setErrors] = useState<ContactFormErrors>({});
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  // Set when the server can't deliver, so the visitor is offered their own mail
+  // app as a fallback rather than losing what they typed.
+  const [showMailtoFallback, setShowMailtoFallback] = useState(false);
   // Hidden anti-spam field: bots fill it, people never see it.
   const [honeypot, setHoneypot] = useState("");
 
@@ -87,6 +90,7 @@ export function Contact() {
 
     setStatus("submitting");
     setErrorMessage("");
+    setShowMailtoFallback(false);
 
     try {
       const response = await fetch("/api/contact", {
@@ -114,6 +118,10 @@ export function Contact() {
             ? result.message
             : "Something went wrong sending your message.",
         );
+        // Rate limiting is temporary, so retrying is the right advice there.
+        // Every other failure means the server can't deliver, so hand the
+        // visitor a prefilled email instead of losing their message.
+        setShowMailtoFallback(result?.error !== "rate_limited");
         return;
       }
 
@@ -126,8 +134,22 @@ export function Contact() {
       setErrorMessage(
         "Could not reach the server. Please check your connection.",
       );
+      setShowMailtoFallback(true);
     }
   };
+
+  /**
+   * A `mailto:` link carrying whatever the visitor typed. Used as the escape
+   * hatch when the server can't send the message itself — one click opens their
+   * mail app with everything already filled in.
+   */
+  const mailtoFallbackHref = `mailto:${profile.email}?subject=${encodeURIComponent(
+    `Portfolio message from ${values.name || "a visitor"}`,
+  )}&body=${encodeURIComponent(
+    [`Name: ${values.name}`, `Email: ${values.email}`, "", values.message].join(
+      "\n",
+    ),
+  )}`;
 
   // Contact details, built from data/profile.ts.
   const details = [
@@ -379,13 +401,29 @@ export function Contact() {
                   </p>
                 ) : null}
                 {status === "error" ? (
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                    {errorMessage} You can also email me directly at{" "}
-                    <a href={`mailto:${profile.email}`} className="underline">
-                      {profile.email}
-                    </a>
-                    .
-                  </p>
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+                    <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                      {errorMessage}
+                    </p>
+
+                    {showMailtoFallback ? (
+                      <>
+                        {/* Nothing typed is lost: this opens the visitor's mail
+                            app with the message already filled in. */}
+                        <p className="mt-1 text-sm text-red-700/80 dark:text-red-400/80">
+                          Your message hasn&rsquo;t been lost — send it straight
+                          from your email app instead.
+                        </p>
+                        <a
+                          href={mailtoFallbackHref}
+                          className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-900 dark:bg-transparent dark:text-red-300 dark:hover:bg-red-950/60"
+                        >
+                          <MailIcon className="h-4 w-4" />
+                          Email it to {profile.email}
+                        </a>
+                      </>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             </form>

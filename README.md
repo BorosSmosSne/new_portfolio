@@ -81,9 +81,17 @@ Submitting the form POSTs to `app/api/contact/route.ts`, which emails the messag
 
 **About the sender address:** the default uses Resend's shared test sender, which can only deliver to the email address you registered with Resend. That's fine for testing. To receive at any other address, verify your own domain in Resend and set `CONTACT_FROM_EMAIL` to an address on it.
 
+**Check your setup:** with the dev server running, open http://localhost:3000/api/contact. It reports whether the key was picked up, where mail is delivered and which sender is used, without printing the key itself. (It returns 404 in production, so nothing is exposed on the live site.)
+
+**Seeing "The contact form is not connected to email yet"?** That's the route telling you `RESEND_API_KEY` is missing while running in production mode — either `npm start` locally or a deployed build. Fixes:
+
+- Local `npm start`: put the key in `.env.local` and restart.
+- Vercel: add it under Settings → Environment Variables, then **redeploy** — existing deployments don't pick up new variables.
+- Check for a blank `RESEND_API_KEY=` line, which counts as unset.
+
 **Behaviour worth knowing**
 
-- Without `RESEND_API_KEY`, submissions are logged to your terminal in development. In production the route returns 503 instead, so a misconfigured deploy fails visibly rather than silently swallowing messages.
+- Without `RESEND_API_KEY`, submissions are logged to your terminal in development. In production the route returns 503 instead, so a misconfigured deploy fails visibly rather than silently swallowing messages. The form then offers the visitor a prefilled `mailto:` link, so their message is never lost either way.
 - `reply_to` is set to the sender's address, so replying in your mail client goes straight back to them.
 - Validation rules live in `lib/contact.ts` and run in both the browser and the route — the browser for fast feedback, the server because anything can POST to an open endpoint.
 - Spam defences: a hidden honeypot field, and a 3-per-minute-per-IP limit. The limit is in-memory, so on serverless it applies per instance; for a hard guarantee back it with Vercel KV or add a CAPTCHA.

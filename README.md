@@ -68,10 +68,23 @@ Submitting the form POSTs to `app/api/contact/route.ts`, which emails the messag
 
 **Setup**
 
-1. Create a free Resend account and copy an API key.
+1. Create a free account at [resend.com](https://resend.com) and copy an API key (it starts with `re_`).
 2. `cp .env.example .env.local` and fill in `RESEND_API_KEY`.
-3. Restart `npm run dev`.
-4. Add the same variable in your Vercel project settings before deploying (Settings → Environment Variables).
+3. Run `npm run check:email`. It sends a real test email and, if anything is wrong, tells you exactly what to change. Use `npm run check:email -- --dry` to inspect the configuration without sending.
+4. Restart `npm run dev`.
+5. Add the same variable in your Vercel project settings before deploying (Settings → Environment Variables), then redeploy.
+
+**Where the key lives, and why it stays secret**
+
+| Where                     | What goes there                        |
+| ------------------------- | -------------------------------------- |
+| `.env.local` (local dev)  | `RESEND_API_KEY=re_...` — gitignored   |
+| Vercel → Env Variables    | the same key, for the deployed site    |
+| anywhere in `/components` | **never** — that code runs in browsers |
+
+The key is only ever read in `app/api/contact/route.ts`, which runs on the server. Next.js only exposes environment variables to the browser when their name starts with `NEXT_PUBLIC_`, so do not rename it to that. The browser only ever sees the response from `/api/contact`, never the key.
+
+This is also why [EmailJS](https://emailjs.com) isn't used here: it sends from browser code, so its key ships to every visitor. That's a reasonable trade-off for a static site with no server, but this project has a server, so the key can stay private.
 
 | Variable             | Required | Default                                     |
 | -------------------- | -------- | ------------------------------------------- |

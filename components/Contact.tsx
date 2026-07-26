@@ -3,6 +3,13 @@
 import { useState } from "react";
 
 import { profile } from "@/data/profile";
+import {
+  CONTACT_LIMITS,
+  HONEYPOT_FIELD,
+  type ContactFormErrors,
+  type ContactFormValues,
+  validateContactForm,
+} from "@/lib/contact";
 
 import {
   CheckCircleIcon,
@@ -17,70 +24,40 @@ import { Section } from "./Section";
 /**
  * CONTACT
  * Left column: contact details + social links (all from data/profile.ts).
- * Right column: a contact form validated entirely on the client.
+ * Right column: a working contact form.
  *
- * Validation rules live in `validate()` below. Fields are checked on submit and
- * re-checked as you type once a field has already errored, so the error message
- * clears as soon as the input becomes valid.
+ * Submitting POSTs to /api/contact, which emails the message to you. See
+ * app/api/contact/route.ts for the one environment variable it needs
+ * (RESEND_API_KEY) — until that is set, submissions are logged to your terminal
+ * in development rather than emailed.
  *
- * >>> WIRING UP A BACKEND: see the marked block inside handleSubmit(). <<<
+ * Validation rules live in lib/contact.ts and are shared with the API route, so
+ * the browser and the server always agree. Fields are checked when you leave
+ * them and on submit, and an error clears as soon as the field becomes valid.
  */
-
-type FormValues = {
-  name: string;
-  email: string;
-  message: string;
-};
-
-type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-const emptyForm: FormValues = { name: "", email: "", message: "" };
-
-/** Pragmatic email check: something@something.tld with no spaces. */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-/** Returns an object of error messages; an empty object means the form is valid. */
-function validate(values: FormValues): FormErrors {
-  const errors: FormErrors = {};
-
-  if (!values.name.trim()) {
-    errors.name = "Please enter your name.";
-  } else if (values.name.trim().length < 2) {
-    errors.name = "That name looks too short.";
-  }
-
-  if (!values.email.trim()) {
-    errors.email = "Please enter your email address.";
-  } else if (!EMAIL_PATTERN.test(values.email.trim())) {
-    errors.email = "Please enter a valid email address.";
-  }
-
-  if (!values.message.trim()) {
-    errors.message = "Please enter a message.";
-  } else if (values.message.trim().length < 10) {
-    errors.message = "Please add a little more detail (10 characters minimum).";
-  }
-
-  return errors;
-}
+const emptyForm: ContactFormValues = { name: "", email: "", message: "" };
 
 export function Contact() {
-  const [values, setValues] = useState<FormValues>(emptyForm);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [values, setValues] = useState<ContactFormValues>(emptyForm);
+  const [errors, setErrors] = useState<ContactFormErrors>({});
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  // Hidden anti-spam field: bots fill it, people never see it.
+  const [honeypot, setHoneypot] = useState("");
 
   /** Keeps state in sync and live-clears an error once the field becomes valid. */
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    const field = event.target.name as keyof FormValues;
+    const field = event.target.name as keyof ContactFormValues;
     const nextValues = { ...values, [field]: event.target.value };
     setValues(nextValues);
 
     if (errors[field]) {
-      const fieldError = validate(nextValues)[field];
+      const fieldError = validateContactForm(nextValues)[field];
       setErrors((previous) => ({ ...previous, [field]: fieldError }));
     }
   };
@@ -89,17 +66,17 @@ export function Contact() {
   const handleBlur = (
     event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    const field = event.target.name as keyof FormValues;
+    const field = event.target.name as keyof ContactFormValues;
     setErrors((previous) => ({
       ...previous,
-      [field]: validate(values)[field],
+      [field]: validateContactForm(values)[field],
     }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors = validate(values);
+    const nextErrors = validateContactForm(values);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       // Move focus to the first invalid field for keyboard/screen-reader users.
@@ -109,41 +86,46 @@ export function Contact() {
     }
 
     setStatus("submitting");
+    setErrorMessage("");
 
     try {
-      /* ------------------------------------------------------------------
-       * ▼▼▼ WIRE UP YOUR BACKEND HERE ▼▼▼
-       *
-       * Right now the submit is simulated locally — nothing is sent anywhere.
-       * Replace the `await new Promise(...)` line below with one of these:
-       *
-       * 1) Formspree (no backend code needed — quickest option):
-       *    const response = await fetch("https://formspree.io/f/YOUR_FORM_ID", {
-       *      method: "POST",
-       *      headers: { "Content-Type": "application/json", Accept: "application/json" },
-       *      body: JSON.stringify(values),
-       *    });
-       *    if (!response.ok) throw new Error("Request failed");
-       *
-       * 2) Your own Next.js route handler (create app/api/contact/route.ts,
-       *    validate again on the server, then send with Resend/Nodemailer):
-       *    const response = await fetch("/api/contact", {
-       *      method: "POST",
-       *      headers: { "Content-Type": "application/json" },
-       *      body: JSON.stringify(values),
-       *    });
-       *    if (!response.ok) throw new Error("Request failed");
-       *
-       * Always re-validate on the server: client-side checks are for UX only.
-       * ------------------------------------------------------------------ */
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      /* ▲▲▲ END BACKEND WIRING ▲▲▲ */
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, [HONEYPOT_FIELD]: honeypot }),
+      });
+
+      // The route replies with JSON for every outcome, but a proxy or an
+      // unexpected crash could return HTML, so don't assume it parses.
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        // The server re-validates; if it disagrees with the browser, show its
+        // field errors rather than a generic failure.
+        if (result?.error === "validation" && result.fields) {
+          setErrors(result.fields as ContactFormErrors);
+          setStatus("idle");
+          return;
+        }
+
+        setStatus("error");
+        setErrorMessage(
+          typeof result?.message === "string"
+            ? result.message
+            : "Something went wrong sending your message.",
+        );
+        return;
+      }
 
       setStatus("success");
       setValues(emptyForm);
       setErrors({});
     } catch {
+      // Network-level failure: offline, DNS, request blocked.
       setStatus("error");
+      setErrorMessage(
+        "Could not reach the server. Please check your connection.",
+      );
     }
   };
 
@@ -223,7 +205,7 @@ export function Contact() {
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-500">
                 Elsewhere
               </p>
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 {profile.socials.map((social) => {
                   const Icon = socialIcons[social.platform];
                   return (
@@ -250,7 +232,9 @@ export function Contact() {
           <Reveal direction="left">
             <form
               onSubmit={handleSubmit}
-              noValidate /* we handle validation ourselves for consistent messages */
+              // Validation is handled in JS so the messages are consistent
+              // across browsers.
+              noValidate
               className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-950"
             >
               {/* Name */}
@@ -266,6 +250,7 @@ export function Contact() {
                   name="name"
                   type="text"
                   autoComplete="name"
+                  maxLength={CONTACT_LIMITS.name.max}
                   value={values.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -300,6 +285,7 @@ export function Contact() {
                   name="email"
                   type="email"
                   autoComplete="email"
+                  maxLength={CONTACT_LIMITS.email.max}
                   value={values.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -333,6 +319,7 @@ export function Contact() {
                   id="message"
                   name="message"
                   rows={5}
+                  maxLength={CONTACT_LIMITS.message.max}
                   value={values.message}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -356,6 +343,23 @@ export function Contact() {
                 ) : null}
               </div>
 
+              {/* Honeypot: hidden from people, irresistible to bots.
+                  Kept out of the tab order and hidden from screen readers. */}
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor={HONEYPOT_FIELD}>Company</label>
+                <input
+                  id={HONEYPOT_FIELD}
+                  name={HONEYPOT_FIELD}
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setHoneypot(event.target.value)
+                  }
+                />
+              </div>
+
               {/* Submit */}
               <button
                 type="submit"
@@ -376,8 +380,11 @@ export function Contact() {
                 ) : null}
                 {status === "error" ? (
                   <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                    Something went wrong sending your message. Please email me
-                    directly at {profile.email}.
+                    {errorMessage} You can also email me directly at{" "}
+                    <a href={`mailto:${profile.email}`} className="underline">
+                      {profile.email}
+                    </a>
+                    .
                   </p>
                 ) : null}
               </div>

@@ -34,6 +34,7 @@ app/
   page.tsx        Assembles the sections in order
   globals.css     The only stylesheet — Tailwind layers + a few base defaults
   icon.svg        Favicon
+  api/contact/route.ts   Receives form submissions and emails them
 components/
   Navbar.tsx      Sticky nav, smooth-scroll links, active-section highlight
   Hero.tsx        About.tsx  Skills.tsx  Projects.tsx  Education.tsx  Contact.tsx  Footer.tsx
@@ -44,6 +45,9 @@ components/
   Icons.tsx       Inline SVG icons
 hooks/
   useActiveSection.ts   IntersectionObserver that reports the section in view
+lib/
+  contact.ts        Form validation shared by the browser and the API route
+  rate-limit.ts     Small in-memory rate limiter
 data/               Site content (see table above)
 public/
   images/           Photos and graphics — referenced as /images/...
@@ -56,7 +60,33 @@ public/
 1. **Photo** — `public/images/profile.png` is a generic placeholder silhouette. Drop your own portrait into `public/images/` (a 4:5 crop fits the Hero frame exactly), then update `photo.src`, `photo.width` and `photo.height` in `data/profile.ts`. Paths are relative to `public/`, so `public/images/profile.jpg` is written as `/images/profile.jpg`.
 2. **Resume** — replace `public/resume.pdf` with your real PDF (keep the filename, or update `resumeUrl` in `data/profile.ts`). The current file is a placeholder.
 3. **Social links** — swap the placeholder URLs in `data/profile.ts`. GitHub, LinkedIn, Facebook, Instagram and Figma are wired up; to add another platform, add it to `SocialPlatform` in `data/types.ts`, write an icon in `components/Icons.tsx`, and register it in the `socialIcons` map (TypeScript will tell you if you miss a step).
-4. **Contact form** — it currently validates on the client and simulates a send; nothing is emailed yet. Open `components/Contact.tsx` and find the `WIRE UP YOUR BACKEND HERE` block inside `handleSubmit`. It has ready-to-paste snippets for Formspree or your own `app/api/contact/route.ts` route handler. Re-validate on the server if you add a route.
+4. **Contact form email** — add a `RESEND_API_KEY` so messages actually reach your inbox. See the section below.
+
+## Contact form
+
+Submitting the form POSTs to `app/api/contact/route.ts`, which emails the message to you through [Resend](https://resend.com)'s HTTP API. There's no email SDK dependency — it's a plain `fetch`.
+
+**Setup**
+
+1. Create a free Resend account and copy an API key.
+2. `cp .env.example .env.local` and fill in `RESEND_API_KEY`.
+3. Restart `npm run dev`.
+4. Add the same variable in your Vercel project settings before deploying (Settings → Environment Variables).
+
+| Variable             | Required | Default                                     |
+| -------------------- | -------- | ------------------------------------------- |
+| `RESEND_API_KEY`     | yes      | —                                           |
+| `CONTACT_TO_EMAIL`   | no       | the `email` in `data/profile.ts`            |
+| `CONTACT_FROM_EMAIL` | no       | `Portfolio Contact <onboarding@resend.dev>` |
+
+**About the sender address:** the default uses Resend's shared test sender, which can only deliver to the email address you registered with Resend. That's fine for testing. To receive at any other address, verify your own domain in Resend and set `CONTACT_FROM_EMAIL` to an address on it.
+
+**Behaviour worth knowing**
+
+- Without `RESEND_API_KEY`, submissions are logged to your terminal in development. In production the route returns 503 instead, so a misconfigured deploy fails visibly rather than silently swallowing messages.
+- `reply_to` is set to the sender's address, so replying in your mail client goes straight back to them.
+- Validation rules live in `lib/contact.ts` and run in both the browser and the route — the browser for fast feedback, the server because anything can POST to an open endpoint.
+- Spam defences: a hidden honeypot field, and a 3-per-minute-per-IP limit. The limit is in-memory, so on serverless it applies per instance; for a hard guarantee back it with Vercel KV or add a CAPTCHA.
 
 ## Design notes
 

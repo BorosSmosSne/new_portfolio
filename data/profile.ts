@@ -48,33 +48,35 @@ export const profile: Profile = {
     height: 5040,
   },
 
-  // TODO: swap these placeholder URLs for your real profiles.
   // Order here is the order they appear in the Hero, Contact and Footer.
+  // To hide a platform, delete its entry — nothing else needs changing.
   socials: [
     {
       platform: "github",
       label: "GitHub",
-      href: "https://github.com/your-username",
+      href: "https://github.com/BorosSmosSne",
     },
     {
       platform: "linkedin",
       label: "LinkedIn",
-      href: "https://www.linkedin.com/in/your-profile",
+      href: "https://www.linkedin.com/in/heng-chhay-b1a672366/",
     },
     {
       platform: "facebook",
       label: "Facebook",
-      href: "https://www.facebook.com/your-profile",
+      href: "https://www.facebook.com/heng.chhay.310634",
     },
     {
+      // Tracking parameters (igsh, utm_source) stripped from the shared link —
+      // they came from Instagram's QR share and aren't needed to reach the profile.
       platform: "instagram",
       label: "Instagram",
-      href: "https://www.instagram.com/your-username",
+      href: "https://www.instagram.com/heng_chhayy",
     },
     {
       platform: "figma",
       label: "Figma",
-      href: "https://www.figma.com/@your-username",
+      href: "https://www.figma.com/@hchhay",
     },
   ],
 };

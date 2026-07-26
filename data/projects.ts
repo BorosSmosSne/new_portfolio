@@ -17,7 +17,7 @@ export const projects: Project[] = [
     description:
       "A point-of-sale app for small retailers: processes transactions at the counter, tracks daily sales, and keeps a running record of what sold and when.",
     tech: ["Flutter", "Dart", "SQLite", "REST API"],
-    // repoUrl: "https://github.com/your-username/pos-mobile-app",
+    // repoUrl: "https://github.com/BorosSmosSne/pos-mobile-app",
   },
   {
     slug: "school-management-system",

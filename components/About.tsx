@@ -25,7 +25,7 @@ export function About() {
     { value: `${projects.length}`, label: "Projects built" },
     { value: `${skillCount}`, label: "Tools & technologies" },
     { value: "Flutter", label: "Primary framework" },
-    { value: "MIS", label: "Academic background" },
+    { value: "2027", label: "Graduating, MIS" },
   ];
 
   return (

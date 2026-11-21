@@ -186,7 +186,7 @@ export function Contact() {
       id="contact"
       eyebrow="Contact"
       title="Let's build something"
-      subtitle="Open to junior and mid-level mobile roles, freelance work, and interesting collaborations. I usually reply within a day."
+      subtitle="Open to mobile developer roles, freelance work and collaborations. References are available on request."
     >
       <div className="grid gap-12 lg:grid-cols-5">
         {/* ---------- Contact details ---------- */}

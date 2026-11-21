@@ -69,7 +69,8 @@ export type Project = {
   title: string;
   /** Primary language/framework, shown as the card's eyebrow label. */
   category: string;
-  description: string;
+  /** Short bullet points describing what you built. Two per project reads best. */
+  highlights: string[];
   /** Tech-stack tags rendered as pills at the bottom of the card. */
   tech: string[];
   /** Optional links — the buttons only render when a URL is provided. */

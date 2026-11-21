@@ -10,7 +10,7 @@ import { Tag } from "./Tag";
  * A responsive card grid driven entirely by data/projects.ts:
  * 1 column on mobile, 2 on tablet, 3 on desktop.
  *
- * Each card shows the category as an eyebrow, the title, the description, and
+ * Each card shows the category as an eyebrow, the title, the highlight bullets, and
  * the tech stack as neutral pills. The "Code" and "Live demo" links only appear
  * when `repoUrl` / `liveUrl` are set on the project, so there are never any
  * dead links.
@@ -21,7 +21,7 @@ export function Projects() {
       id="projects"
       eyebrow="Projects"
       title="Things I've built"
-      subtitle="Mobile, desktop and back-office systems — each one taken from idea to working software."
+      subtitle="Mobile apps, APIs and web systems, each taken from idea to working software."
     >
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((project, index) => (
@@ -40,9 +40,11 @@ export function Projects() {
 
                 {/* Description — flex-1 pushes the tags to the card bottom so
                     every card in a row lines up regardless of text length. */}
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                  {project.description}
-                </p>
+                <ul className="mt-3 flex-1 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-600 marker:text-slate-400 dark:text-slate-400">
+                  {project.highlights.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
 
                 {/* Tech stack */}
                 <ul className="mt-5 flex flex-wrap gap-2">

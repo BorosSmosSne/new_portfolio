@@ -2,7 +2,8 @@ import Image from "next/image";
 
 import { profile } from "@/data/profile";
 
-import { ArrowDownIcon, DownloadIcon, MapPinIcon, socialIcons } from "./Icons";
+// import { ArrowDownIcon, DownloadIcon, MapPinIcon, socialIcons } from "./Icons";
+import { ArrowDownIcon, MapPinIcon, socialIcons } from "./Icons";
 import { Reveal } from "./Reveal";
 
 /**
@@ -44,7 +45,7 @@ export function Hero() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
                 </span>
-                Open to new opportunities
+                Open to mobile developer roles
               </span>
             </Reveal>
 
@@ -90,14 +91,14 @@ export function Hero() {
                 </a>
 
                 {/* Secondary CTA — downloads the PDF from /public */}
-                <a
+                {/* <a
                   href={profile.resumeUrl}
                   download
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-900"
                 >
                   <DownloadIcon className="h-4 w-4" />
                   Download Resume
-                </a>
+                </a> */}
               </div>
             </Reveal>
 

@@ -7,18 +7,18 @@ import type { SkillGroup } from "./types";
  */
 export const skillGroups: SkillGroup[] = [
   {
-    title: "Programming & Frameworks",
-    description: "Languages and frameworks I build products with.",
-    skills: ["Flutter", "Dart", "Python", "C#", "C++", "Node.js"],
+    title: "Mobile",
+    description: "Cross-platform apps for Android and iOS.",
+    skills: ["Flutter", "Dart", "Firebase Auth", "Xcode"],
   },
   {
-    title: "Databases & Tools",
+    title: "Backend & Payments",
+    description: "APIs and the payments behind them.",
+    skills: ["Laravel", "PHP", "Java Spring Boot", "REST API", "KHQR", "Stripe"],
+  },
+  {
+    title: "Data & Tools",
     description: "How I store data and ship code.",
-    skills: ["MongoDB", "SQL Server", "SQLite", "Docker", "Git"],
-  },
-  {
-    title: "Design",
-    description: "Designing the interface before building it.",
-    skills: ["Figma", "UI/UX", "Blender"],
+    skills: ["MySQL", "SQLite", "Git & GitHub", "Figma"],
   },
 ];
